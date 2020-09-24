@@ -7,6 +7,8 @@ import javax.crypto.*;
 import java.security.InvalidKeyException;
 
 import java.util.Arrays;
+import java.io.FileOutputStream;
+import java.io.File;
 
 public class SymmetricCipher {
 	final int AES_BLOCK_SIZE = 16;
@@ -33,12 +35,23 @@ public class SymmetricCipher {
 	public void SymmetricCipher() {
 	}
 
+    private static void dumpToFile(byte[] content, String file) {
+        try {
+            OutputStream os = new FileOutputStream(new File(file));
+            os.write(content);
+            os.flush();
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+    }
+
 	private byte[] PKCS5Padding(byte[] plainText, int blockSize) {
 		int padding = blockSize - (plainText.length % blockSize);
 		if (padding == 0)
 			padding = blockSize;
 
-		System.out.println("Adding padding: " + padding);
 		byte[] paddedText = new byte[plainText.length + padding];
 
 		for (int i = 0; i < plainText.length; i++)
@@ -51,8 +64,8 @@ public class SymmetricCipher {
 	}
 
 	private byte[] PKCS5Trimming(byte[] plainText) {
-		byte padding = plainText[plainText.length - 1];
-		byte[] noPadded = new byte[plainText.length - (int)padding];
+		byte pad = plainText[plainText.length - 1];
+		byte[] noPadded = new byte[plainText.length - (int)pad];
 
 		for (int i = 0; i < noPadded.length; i++)
 			noPadded[i] = plainText[i];
@@ -65,32 +78,34 @@ public class SymmetricCipher {
     /*************************************************************************************/
 	public byte[] encryptCBC (byte[] input, byte[] byteKey) throws Exception {
 
-		input = PKCS5Padding(input, AES_BLOCK_SIZE);
+		// Add padding to the input
+        input = PKCS5Padding(input, AES_BLOCK_SIZE);
 
-		int block_number = input.length / AES_BLOCK_SIZE;
-		byte[] ciphertext = new byte[block_number * AES_BLOCK_SIZE];
+        // Output length will be equal to input length (already padded)
+		byte[] ciphertext = new byte[input.length];
 
+        // Initialize encryption engine with AES key passed
 		s = new SymmetricEncryption(byteKey);
 
-		byte pad;
-
+        // Initialize temporal variables with IV
 		byte[] prevBlock = new byte[AES_BLOCK_SIZE];
 		byte[] currBlock = new byte[AES_BLOCK_SIZE];
+		System.arraycopy(iv, 0, prevBlock, 0, AES_BLOCK_SIZE);
+		System.arraycopy(iv, 0, currBlock, 0, AES_BLOCK_SIZE);
 
-		System.arraycopy(iv, 0, prevBlock, 0, prevBlock.length);
-		System.arraycopy(iv, 0, currBlock, 0, currBlock.length);
+		// CBC mode for each block
+		for (int i = 0; i < input.length/AES_BLOCK_SIZE; i++) {
+            // Get the current block from the input buffer
+            System.arraycopy(input, i*AES_BLOCK_SIZE, currBlock, 0, AES_BLOCK_SIZE);
+			
+            // XOR operation
+			for (int j = 0; j < AES_BLOCK_SIZE; j++)
+				currBlock[j] ^= prevBlock[j];
 
-		// BLOQUES COMPLETOS
-		for (int i = 0; i < block_number; i++) {
-			for (int j = 0; j < AES_BLOCK_SIZE; j++) {
-				currBlock[j] = input[(i * AES_BLOCK_SIZE) + j];
-			}
-			//XOR
-			for (int k = 0; k < AES_BLOCK_SIZE; k++) {
-				currBlock[k] ^= prevBlock[k];
-			}
-
+            // Encode the current block with AES
 			prevBlock = s.encryptBlock(currBlock);
+
+            // Copy the result to the final buffer
 			System.arraycopy(prevBlock, 0, ciphertext, i*AES_BLOCK_SIZE, AES_BLOCK_SIZE);
 		}
 
@@ -104,105 +119,81 @@ public class SymmetricCipher {
 
 	public byte[] decryptCBC (byte[] input, byte[] byteKey) throws Exception {
 
-		int block_number = input.length / AES_BLOCK_SIZE;
-		byte[] finalplaintext = new byte[block_number * AES_BLOCK_SIZE];
+        // Output length will be equal to input length (padding included!)
+        // Real output length will be reduced later, when padding is removed
+		byte[] plainText = new byte[input.length];
 
+        // Initialize decryption engine with AES key passed
 		d = new SymmetricEncryption(byteKey);
-
+		
+        // Initialize temporal variables with IV
 		byte[] prevBlock = new byte[AES_BLOCK_SIZE];
 		byte[] currBlock = new byte[AES_BLOCK_SIZE];
 		byte[] deciphered = new byte[AES_BLOCK_SIZE];
+		System.arraycopy(iv, 0, prevBlock, 0, AES_BLOCK_SIZE);
+		System.arraycopy(iv, 0, currBlock, 0, AES_BLOCK_SIZE);
 
-		System.arraycopy(iv, 0, prevBlock, 0, prevBlock.length);
-		System.arraycopy(iv, 0, currBlock, 0, currBlock.length);
+        // CBC mode for each block
+        for (int i = 0; i < input.length/AES_BLOCK_SIZE; i++) {
+            // Get the current block from the input buffer
+            System.arraycopy(input, i*AES_BLOCK_SIZE, currBlock, 0, AES_BLOCK_SIZE);
+    
+            // Decode the current block with AES
+            deciphered = s.decryptBlock(currBlock);
 
-		// BLOQUES COMPLETOS (todos, en el caso de decrypt)
-		for (int i = 0; i < block_number; i++) {
+			// XOR operation
 			for (int j = 0; j < AES_BLOCK_SIZE; j++)
-				currBlock[j] = input[(i * AES_BLOCK_SIZE) + j];
-
-			deciphered = s.decryptBlock(currBlock);
-
-			//XOR
-			for (int k = 0; k < AES_BLOCK_SIZE; k++)
-				deciphered[k] ^= prevBlock[k];
+				deciphered[j] ^= prevBlock[j];
 
 			// Update prevBlock for the next block operation
 			System.arraycopy(currBlock, 0, prevBlock, 0, AES_BLOCK_SIZE);
 
-			System.arraycopy(deciphered, 0, finalplaintext, i*AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+            // Copy the result to the final buffer
+			System.arraycopy(deciphered, 0, plainText, i*AES_BLOCK_SIZE, AES_BLOCK_SIZE);
 		}
 
-		// Eliminate the padding (last block)
-		// HE DEJADO ESTO POR SI NECESITAMOS VERIFICAR QUE EL PADDING ESTE BIEN,
-		// QUE NO CREO QUE HAGA FALTA...
-		/*
-		byte pad = finalplaintext[(block_number * AES_BLOCK_SIZE) - 1];
-		System.out.println("PADDING detected: " + pad);
+        // Remove padding from cleartext
+		plainText = PKCS5Trimming(plainText);
 
-		int expected = pad;
-
-		for (int i = 0; i < AES_BLOCK_SIZE; i++) {
-				if (expected <= 0)
-					break;
-
-				if(pad != finalplaintext[(block_number * AES_BLOCK_SIZE) - 1 - i]) {
-					System.out.println("MAL: pad= "+pad+" final= "+finalplaintext[block_number * AES_BLOCK_SIZE -1 - i]);
-					return null; //ERROR padding distinto
-				}
-				else
-					expected--;
-		}
-
-		System.out.println("PADDING OK");
-
-		finalplaintext = Arrays.copyOfRange(finalplaintext, 0, input.length - pad);
-		*/
-
-		finalplaintext = PKCS5Trimming(finalplaintext);
-
-		return finalplaintext;
+		return plainText;
 	}
 
-	public static void main(String[] args) throws Exception {
-		SymmetricCipher prueba = new SymmetricCipher();
-		byte [] imp;
+    public static void prettyCryptoPrint(byte[] data) {
+		for (int i = 0; i < data.length; i++) {
+			if (i % 16 == 0 && i != 0)
+				System.out.println();
+			if (i % 8 == 0)
+				System.out.print(" ");
 
-		byte[] padded;
+				System.out.printf("%02X ", data[i]);
+		}
+    }
+
+	public static void main(String[] args) throws Exception {
+		SymmetricCipher ciph = new SymmetricCipher();
+		byte[] imp;
 
 		System.out.println("Encrypting...");
-		imp = prueba.encryptCBC(iv2, iv);
-		System.out.println("CIPHERTEXT");
-		for(int i=0; i<imp.length;i++) {
-			if(i % 16 == 0 && i != 0)
-				System.out.println();
-			if(i % 8 == 0)
-				System.out.print(" ");
+		imp = ciph.encryptCBC(iv2, iv);
+		
+        System.out.println("\nCIPHERTEXT");
+        prettyCryptoPrint(imp);
 
-				System.out.printf("%02X ", imp[i]);
-		}
-		System.out.println();
-		System.out.println();
+		System.out.println("\n\nDecrypting...");
+		imp = ciph.decryptCBC(imp, iv);
 
-		System.out.println("Decrypting...");
-		imp = prueba.decryptCBC(imp, iv);
+		System.out.println("\nPLAINTEXT");
+        prettyCryptoPrint(imp);
 
-		System.out.println("PLAINTEXT");
-		for (int i = 0; i < imp.length; i++) {
-			if(i % 16 == 0 && i != 0)
-				System.out.println();
-			if(i % 8 == 0)
-				System.out.print(" ");
-
-			System.out.printf("%02X ", imp[i]);
-		}
-
+        System.out.print("\n\nBasic test: ");
 		for (int i = 0; i < iv2.length; i++) {
-			if (iv2[i] != imp[i])
-				System.out.println("TEST FAILED!!!!!!!!!!");
-		}
+			if (iv2[i] != imp[i]) {
+				System.out.println("FAIL");
+                return;
+            }
+        }
 
-		System.out.println();
+        System.out.println("Pass");
 
 	}
 
