@@ -22,12 +22,6 @@ public class SymmetricCipher {
     static byte[] iv = new byte[] { (byte)49, (byte)50, (byte)51, (byte)52, (byte)53, (byte)54,
         (byte)55, (byte)56, (byte)57, (byte)48, (byte)49, (byte)50, (byte)51, (byte)52,
         (byte)53, (byte)54};
-    static byte[] iv2 = new byte[] {
-        (byte)49, (byte)50, (byte)51, (byte)52, (byte)53, (byte)54, (byte)55, (byte)56,
-            (byte)57, (byte)48, (byte)49, (byte)50, (byte)51, (byte)52, (byte)53, (byte)54,
-
-            (byte)49, (byte)50, (byte)51, (byte)52, (byte)53, (byte)54, (byte)55, (byte)56,
-            (byte)57, (byte)48, (byte)49, (byte)50, (byte)51, (byte)52, (byte)53, (byte)54};
 
     /*************************************************************************************/
     /* Constructor method */
@@ -156,44 +150,6 @@ public class SymmetricCipher {
         plainText = PKCS5Trimming(plainText);
 
         return plainText;
-    }
-
-    public static void prettyCryptoPrint(byte[] data) {
-        for (int i = 0; i < data.length; i++) {
-            if (i % 16 == 0 && i != 0)
-                System.out.println();
-            if (i % 8 == 0)
-                System.out.print(" ");
-
-            System.out.printf("%02X ", data[i]);
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
-        SymmetricCipher ciph = new SymmetricCipher();
-        byte[] imp;
-
-        System.out.println("Encrypting...");
-        imp = ciph.encryptCBC(iv2, iv);
-
-        System.out.println("\nCIPHERTEXT");
-        prettyCryptoPrint(imp);
-
-        System.out.println("\n\nDecrypting...");
-        imp = ciph.decryptCBC(imp, iv);
-
-        System.out.println("\nPLAINTEXT");
-        prettyCryptoPrint(imp);
-
-        System.out.print("\n\nBasic test: ");
-        for (int i = 0; i < iv2.length; i++) {
-            if (iv2[i] != imp[i]) {
-                System.out.println("FAIL");
-                return;
-            }
-        }
-
-        System.out.println("Pass");
     }
 
 }

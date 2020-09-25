@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -15,17 +16,20 @@ import java.security.Security;
 import java.security.Signature;
 import javax.crypto.Cipher;
 
+import javax.crypto.IllegalBlockSizeException;
+import java.util.Arrays;
+
 
 public class RSALibrary {
 
     // String to hold name of the encryption algorithm.
-    public final String ALGORITHM = "RSA";
+    private static final String ALGORITHM = "RSA";
 
     //String to hold the name of the private key file.
-    public final String PRIVATE_KEY_FILE = "./private.key";
+    public static final String PRIVATE_KEY_FILE = "./private.key";
 
     // String to hold name of the public key file.
-    public final String PUBLIC_KEY_FILE = "./public.key";
+    public static final String PUBLIC_KEY_FILE = "./public.key";
 
     /***********************************************************************************/
     /* Generates an RSA key pair (a public and a private key) of 1024 bits length */
@@ -35,22 +39,19 @@ public class RSALibrary {
     public void generateKeys() throws IOException {
 
         try {
-
             final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
-            keyGen.initialize(1024);
+            keyGen.initialize(1024, new SecureRandom());
 
             // Use KeyGen to generate a public and a private key
             KeyPair pair = keyGen.generateKeyPair();
             PublicKey publicKey = pair.getPublic();
             PrivateKey privateKey = pair.getPrivate();
 
-            // TO-DO: store the public key in the file PUBLIC_KEY_FILE
-            // ...
-            dumpKeyToFile(publicKey, PUBLIC_KEY_FILE);
+            // Store the public key in the file PUBLIC_KEY_FILE
+            keyToFile(publicKey, PUBLIC_KEY_FILE);
 
-            // TO-DO: store the private key in the file PRIVATE_KEY_FILE
-            // ...
-            dumpKeyToFile(privateKey, PRIVATE_KEY_FILE);
+            // Store the private key in the file PRIVATE_KEY_FILE
+            keyToFile(privateKey, PRIVATE_KEY_FILE);
 
         } catch (NoSuchAlgorithmException e) {
             System.out.println("Exception: " + e.getMessage());
@@ -58,7 +59,7 @@ public class RSALibrary {
         }
     }
 
-    private static void dumpKeyToFile(Object key, String file) {
+    public void keyToFile(Key key, String file) {
         try {
             FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -71,51 +72,83 @@ public class RSALibrary {
         }
     }
 
+    public Key fileToKey(String file) {
+        Key key = null;
+
+        try {
+            FileInputStream ios = new FileInputStream(file);
+            ObjectInputStream ois = new ObjectInputStream(ios);
+
+            key = (Key)ois.readObject();
+
+            ois.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+        return key;
+    }
+
     /***********************************************************************************/
     /* Encrypts a plaintext using an RSA public key. */
     /* Arguments: the plaintext and the RSA public key */
     /* Returns a byte array with the ciphertext */
     /***********************************************************************************/
-    public byte[] encrypt(byte[] plaintext, PublicKey key) {
+    public byte[] encrypt(byte[] plainText, PublicKey key) {
 
-        byte[] ciphertext = null;
+        byte[] cipherText = null;
+
+        if (plainText == null || key == null)
+            return null;
 
         try {
-
             // Gets an RSA cipher object
             final Cipher cipher = Cipher.getInstance(ALGORITHM);
 
-            // TO-DO: initialize the cipher object and use it to encrypt the plaintext
-            // ...
+            // Initialize the cipher object and use it to encrypt the plaintext
+            cipher.init(Cipher.ENCRYPT_MODE, key);
 
-        } catch (Exception e) {
+            cipherText = cipher.doFinal(plainText);
+
+        } catch (IllegalBlockSizeException i) {
+            System.out.println("Message is longer than the key");
+        }
+
+        catch (Exception e) {
             e.printStackTrace();
         }
-        return ciphertext;
-    }
 
+        return cipherText;
+    }
 
     /***********************************************************************************/
     /* Decrypts a ciphertext using an RSA private key. */
     /* Arguments: the ciphertext and the RSA private key */
     /* Returns a byte array with the plaintext */
     /***********************************************************************************/
-    public byte[] decrypt(byte[] ciphertext, PrivateKey key) {
+    public byte[] decrypt(byte[] cipherText, PrivateKey key) {
 
-        byte[] plaintext = null;
+        byte[] plainText = null;
+
+        if(cipherText == null || key == null)
+            return null;
 
         try {
             // Gets an RSA cipher object
             final Cipher cipher = Cipher.getInstance(ALGORITHM);
 
-            // TO-DO: initialize the cipher object and use it to decrypt the ciphertext
-            // ...
+            // Initialize the cipher object and use it to decrypt the ciphertext
+            cipher.init(Cipher.DECRYPT_MODE, key);
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            plainText = cipher.doFinal(cipherText);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return plaintext;
+        return plainText;
     }
 
     /***********************************************************************************/
@@ -123,23 +156,22 @@ public class RSALibrary {
     /* Arguments: the plaintext and the RSA private key */
     /* Returns a byte array with the signature */
     /***********************************************************************************/
-    public byte[] sign(byte[] plaintext, PrivateKey key) {
+    public byte[] sign(byte[] plainText, PrivateKey key) {
 
         byte[] signedInfo = null;
 
         try {
-
             // Gets a Signature object
             Signature signature = Signature.getInstance("SHA1withRSA");
 
-            // TO-DO: initialize the signature oject with the private key
-            // ...
+            // Initialize the signature object with the private key
+            signature.initSign(key);
 
-            // TO-DO: set plaintext as the bytes to be signed
-            // ...
+            // Set plaintext as the bytes to be signed
+            signature.update(plainText);
 
-            // TO-DO: sign the plaintext and obtain the signature (signedInfo)
-            // ...
+            // Sign the plaintext and obtain the signature (signedInfo)
+            signedInfo = signature.sign();
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -154,38 +186,28 @@ public class RSALibrary {
     /* and the RSA public key */
     /* Returns TRUE if the signature was verified, false if not */
     /***********************************************************************************/
-    public boolean verify(byte[] plaintext, byte[] signed, PublicKey key) {
+    public boolean verify(byte[] plainText, byte[] signed, PublicKey key) {
 
         boolean result = false;
 
         try {
-
             // Gets a Signature object
             Signature signature = Signature.getInstance("SHA1withRSA");
 
-            // TO-DO: initialize the signature oject with the public key
-            // ...
+            // Initialize the signature oject with the public key
+            signature.initVerify(key);
 
-            // TO-DO: set plaintext as the bytes to be veryfied
-            // ...
+            // Set plaintext as the bytes to be veryfied
+            signature.update(plainText);
 
-            // TO-DO: verify the signature (signed). Store the outcome in the boolean result
-            // ...
+            // Verify the signature (signed). Store the outcome in the boolean result
+            result = signature.verify(signed);
 
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
         return result;
-    }
-
-    public static void main(String[] args) {
-      try {
-        RSALibrary rsa = new RSALibrary();
-        rsa.generateKeys();
-      } catch(Exception e) {
-        e.printStackTrace();
-      }
     }
 
 }
