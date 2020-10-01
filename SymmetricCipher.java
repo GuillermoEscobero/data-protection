@@ -7,18 +7,14 @@ import javax.crypto.*;
 import java.security.InvalidKeyException;
 
 import java.util.Arrays;
-import java.io.FileOutputStream;
-import java.io.File;
 
 public class SymmetricCipher {
     final int AES_BLOCK_SIZE = 16;
 
-    byte[] byteKey;
     SymmetricEncryption s;
     SymmetricEncryption d;
 
     // Initialization Vector (fixed)
-
     static byte[] iv = new byte[] { (byte)49, (byte)50, (byte)51, (byte)52, (byte)53, (byte)54,
         (byte)55, (byte)56, (byte)57, (byte)48, (byte)49, (byte)50, (byte)51, (byte)52,
         (byte)53, (byte)54};
@@ -29,28 +25,19 @@ public class SymmetricCipher {
     public void SymmetricCipher() {
     }
 
-    private static void dumpToFile(byte[] content, String file) {
-        try {
-            OutputStream os = new FileOutputStream(new File(file));
-            os.write(content);
-            os.flush();
-            os.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
-    }
-
     private byte[] PKCS5Padding(byte[] plainText, int blockSize) {
+        // The padding value is the number remaining bytes to fill the block
         int padding = blockSize - (plainText.length % blockSize);
         if (padding == 0)
             padding = blockSize;
 
         byte[] paddedText = new byte[plainText.length + padding];
 
+        // Copy the plaintext
         for (int i = 0; i < plainText.length; i++)
             paddedText[i] = plainText[i];
 
+        // Add padding value
         for (int i = plainText.length; i < paddedText.length; i++)
             paddedText[i] = (byte)padding;
 
@@ -58,9 +45,12 @@ public class SymmetricCipher {
     }
 
     private byte[] PKCS5Trimming(byte[] plainText) {
+        // The last byte indicates the number of bytes to trim from the
+        // plaintext in order to remove the padding
         byte pad = plainText[plainText.length - 1];
         byte[] noPadded = new byte[plainText.length - (int)pad];
 
+        // Copy all bytes but the last ones (padding)
         for (int i = 0; i < noPadded.length; i++)
             noPadded[i] = plainText[i];
 
@@ -109,8 +99,6 @@ public class SymmetricCipher {
     /*************************************************************************************/
     /* Method to decrypt using AES/CBC/PKCS5 */
     /*************************************************************************************/
-
-
     public byte[] decryptCBC (byte[] input, byte[] byteKey) throws Exception {
 
         // Output length will be equal to input length (padding included!)

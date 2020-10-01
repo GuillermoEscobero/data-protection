@@ -59,17 +59,6 @@ public class TestSymmetricCipher {
             (byte)49, (byte)50, (byte)51, (byte)52
     };
 
-    private void prettyCryptoPrint(byte[] data) {
-        for (int i = 0; i < data.length; i++) {
-            if (i % 16 == 0 && i != 0)
-                System.out.println();
-            if (i % 8 == 0)
-                System.out.print(" ");
-
-            System.out.printf("%02X ", data[i]);
-        }
-    }
-
     private boolean TestSymmetricCipherBasic(byte[] testVector) throws Exception {
         SymmetricCipher ciph = new SymmetricCipher();
         byte[] imp;
