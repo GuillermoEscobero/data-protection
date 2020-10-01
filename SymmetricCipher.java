@@ -62,6 +62,9 @@ public class SymmetricCipher {
     /*************************************************************************************/
     public byte[] encryptCBC (byte[] input, byte[] byteKey) throws Exception {
 
+        if (input == null || byteKey == null)
+          return null;
+
         // Add padding to the input
         input = PKCS5Padding(input, AES_BLOCK_SIZE);
 
@@ -100,6 +103,9 @@ public class SymmetricCipher {
     /* Method to decrypt using AES/CBC/PKCS5 */
     /*************************************************************************************/
     public byte[] decryptCBC (byte[] input, byte[] byteKey) throws Exception {
+
+        if (input == null || byteKey == null)
+          return null;
 
         // Output length will be equal to input length (padding included!)
         // Real output length will be reduced later, when padding is removed
