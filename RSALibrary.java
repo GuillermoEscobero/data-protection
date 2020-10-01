@@ -54,17 +54,21 @@ public class RSALibrary {
             keyToFile(privateKey, PRIVATE_KEY_FILE);
 
         } catch (NoSuchAlgorithmException e) {
-            System.out.println("Exception: " + e.getMessage());
+            e.printStackTrace();
             System.exit(-1);
         }
     }
 
     public void keyToFile(Key key, String file) {
+        if (key == null || file.length() <= 0)
+          return;
+
         try {
             FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
             oos.writeObject(key);
+            oos.flush();
             oos.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -114,10 +118,12 @@ public class RSALibrary {
 
         } catch (IllegalBlockSizeException i) {
             System.out.println("Message is longer than the key");
+            return null;
         }
 
         catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
 
         return cipherText;
@@ -146,6 +152,7 @@ public class RSALibrary {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
 
         return plainText;
@@ -175,6 +182,7 @@ public class RSALibrary {
 
         } catch (Exception ex) {
             ex.printStackTrace();
+            return null;
         }
 
         return signedInfo;
@@ -187,6 +195,9 @@ public class RSALibrary {
     /* Returns TRUE if the signature was verified, false if not */
     /***********************************************************************************/
     public boolean verify(byte[] plainText, byte[] signed, PublicKey key) {
+
+        if (plainText == null || signed == null || key == null)
+          return false;
 
         boolean result = false;
 
@@ -203,8 +214,9 @@ public class RSALibrary {
             // Verify the signature (signed). Store the outcome in the boolean result
             result = signature.verify(signed);
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
 
         return result;
