@@ -1,3 +1,16 @@
+/**
+ * @Author: Guillermo Escobero, Alvaro Santos
+ * @Date:   04-10-2020
+ * @Project: Data Protection Lab 2
+ * @Filename: RSALibrary.java
+ * @Last modified by:   Guillermo Escobero, Alvaro Santos
+ * @Last modified time: 04-10-2020
+ */
+
+
+
+package main.java.lab2;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,6 +37,9 @@ public class RSALibrary {
 
     // String to hold name of the encryption algorithm.
     private static final String ALGORITHM = "RSA";
+
+    // String to hold name of the signing algorithm.
+    private static final String SIG_ALGORITHM = "SHA1withRSA";
 
     //String to hold the name of the private key file.
     public static final String PRIVATE_KEY_FILE = "./private.key";
@@ -203,7 +219,7 @@ public class RSALibrary {
 
         try {
             // Gets a Signature object
-            Signature signature = Signature.getInstance("SHA1withRSA");
+            Signature signature = Signature.getInstance(SIG_ALGORITHM);
 
             // Initialize the signature oject with the public key
             signature.initVerify(key);
