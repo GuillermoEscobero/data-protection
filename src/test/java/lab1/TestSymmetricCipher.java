@@ -1,3 +1,16 @@
+/**
+ * @Author: Guillermo Escobero, Alvaro Santos
+ * @Date:   04-10-2020
+ * @Project: Data Protection Lab 2
+ * @Filename: TestSymmetricCipher.java
+ * @Last modified by:   Guillermo Escobero, Alvaro Santos
+ * @Last modified time: 04-10-2020
+ */
+
+
+
+package test.java.lab1;
+
 import main.java.lab1.SymmetricCipher;
 import main.java.lab1.SymmetricEncryption;
 
