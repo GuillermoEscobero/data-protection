@@ -1,3 +1,5 @@
+package main.java.lab1;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,11 +13,11 @@ import java.util.Arrays;
 public class SymmetricCipher {
     final int AES_BLOCK_SIZE = 16;
 
-    SymmetricEncryption s;
-    SymmetricEncryption d;
+    private SymmetricEncryption s;
+    private SymmetricEncryption d;
 
     // Initialization Vector (fixed)
-    static byte[] iv = new byte[] { (byte)49, (byte)50, (byte)51, (byte)52, (byte)53, (byte)54,
+    public static byte[] iv = new byte[] { (byte)49, (byte)50, (byte)51, (byte)52, (byte)53, (byte)54,
         (byte)55, (byte)56, (byte)57, (byte)48, (byte)49, (byte)50, (byte)51, (byte)52,
         (byte)53, (byte)54};
 

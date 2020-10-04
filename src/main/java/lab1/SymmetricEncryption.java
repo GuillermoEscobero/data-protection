@@ -1,3 +1,5 @@
+package main.java.lab1;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,10 +8,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.InvalidKeyException;
 import javax.crypto.NoSuchPaddingException;
 
-
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
-
 
 public class SymmetricEncryption {
 
@@ -24,18 +24,18 @@ public class SymmetricEncryption {
 	/* Constructor method */
     /*************************************************************************************/
 	public SymmetricEncryption (byte[] byteKey) throws InvalidKeyException {
-		
+
 		try {
 			key = new SecretKeySpec(byteKey, ALGORITHM);
 
 			// Initializes the Encryption
    			aesEnc = Cipher.getInstance(MODE_OF_OPERATION);
     		aesEnc.init(Cipher.ENCRYPT_MODE, key);
-		
+
 			// Initializes the Decryption
    			aesDec = Cipher.getInstance(MODE_OF_OPERATION);
     		aesDec.init(Cipher.DECRYPT_MODE, key);
-		
+
 		} catch (NoSuchAlgorithmException e) {
 			System.out.println("Exception: " + e.getMessage());
 			System.exit(-1);
