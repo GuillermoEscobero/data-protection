@@ -1,7 +1,7 @@
 /**
  * @Author: Guillermo Escobero, Alvaro Santos
  * @Date:   04-10-2020
- * @Project: Data Protection Lab 2
+ * @Project: Data Protection Lab
  * @Filename: SymmetricEncryption.java
  * @Last modified by:   Guillermo Escobero, Alvaro Santos
  * @Last modified time: 04-10-2020
