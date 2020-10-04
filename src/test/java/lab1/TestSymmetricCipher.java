@@ -1,3 +1,5 @@
+package test.java.lab1;
+
 import main.java.lab1.SymmetricCipher;
 import main.java.lab1.SymmetricEncryption;
 
