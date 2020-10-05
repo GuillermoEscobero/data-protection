@@ -152,7 +152,7 @@ public class SymmetricCipher {
 				System.arraycopy(input, i*AES_BLOCK_SIZE, currBlock, 0, AES_BLOCK_SIZE);
 
 				// Decode the current block with AES
-				deciphered = s.decryptBlock(currBlock);
+				deciphered = d.decryptBlock(currBlock);
 
 				// XOR operation
 				for (int j = 0; j < AES_BLOCK_SIZE; j++)
