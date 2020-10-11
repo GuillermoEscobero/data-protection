@@ -4,7 +4,7 @@
  * @Project: Data Protection Lab
  * @Filename: SymmetricCipher.java
  * @Last modified by:   Guillermo Escobero, Alvaro Santos
- * @Last modified time: 04-10-2020
+ * @Last modified time: 11-10-2020
  */
 
 package main.java.lab1;
@@ -20,7 +20,7 @@ import java.security.InvalidKeyException;
 import java.util.Arrays;
 
 public class SymmetricCipher {
-    final int AES_BLOCK_SIZE = 16;
+    public static final int AES_BLOCK_SIZE = 16;
 
     private SymmetricEncryption s;
     private SymmetricEncryption d;

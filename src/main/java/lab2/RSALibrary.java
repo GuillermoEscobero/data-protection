@@ -106,7 +106,6 @@ public class RSALibrary {
             ObjectInputStream ois = new ObjectInputStream(ios);
 
             key = (Key)ois.readObject();
-
             ois.close();
 
         } catch (Exception e) {

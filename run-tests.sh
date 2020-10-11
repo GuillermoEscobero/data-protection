@@ -25,3 +25,8 @@ java test/java/lab1/TestSymmetricCipher
 
 echo -e "\nLab 2 tests..."
 java test/java/lab2/TestRSALibrary
+
+echo -e "\nLab 3 tests..."
+#java main/java/lab3/SimpleSec g
+#java main/java/lab3/SimpleSec e readme.txt readme.txt.enc
+java main/java/lab3/SimpleSec d readme.txt.enc readme2.txt
