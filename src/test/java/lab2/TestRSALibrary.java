@@ -4,7 +4,7 @@
  * @Project: Data Protection Lab 2
  * @Filename: TestRSALibrary.java
  * @Last modified by:   Guillermo Escobero, Alvaro Santos
- * @Last modified time: 04-10-2020
+ * @Last modified time: 11-10-2020
  */
 
 
@@ -25,11 +25,11 @@ public class TestRSALibrary {
     private static final String ANSI_GREEN = "\u001B[32m";
 
     private static void TEST_OK() {
-        System.out.println(ANSI_GREEN + "PASS" + ANSI_RESET);
+        System.out.println(ANSI_GREEN + " PASS" + ANSI_RESET);
     }
 
     private static void TEST_FAIL() {
-        System.out.println(ANSI_RED + "FAIL" + ANSI_RESET);
+        System.out.println(ANSI_RED + " FAIL" + ANSI_RESET);
     }
 
     private static byte[] testVectorBasic = new byte[] {
@@ -192,30 +192,38 @@ public class TestRSALibrary {
         TestRSALibrary testSuite = new TestRSALibrary();
 
         RSALibrary rsa = new RSALibrary();
-        rsa.generateKeys();
+
+        System.out.print("Key generation test:");
+        rsa.generateKeys(); // Generates 1024-bit RSA key pair
 
         PrivateKey privateKey = (PrivateKey)rsa.fileToKey(RSALibrary.PRIVATE_KEY_FILE);
         PublicKey publicKey = (PublicKey)rsa.fileToKey(RSALibrary.PUBLIC_KEY_FILE);
 
-        System.out.print("Short encryption test: ");
+        if (privateKey != null && publicKey != null)
+          TEST_OK();
+        else
+          TEST_FAIL();
+
+        System.out.print("Short encryption test:");
         if (!testSuite.TestRSALibraryEncryption(testVectorBasic, publicKey, privateKey))
             TEST_FAIL();
         else
             TEST_OK();
 
-        System.out.print("Extended encryption test: ");
-        if (!testSuite.TestRSALibraryEncryption(testVectorASCII, publicKey, privateKey))
+        // Message larger than key (1024 bits) Expected to fail
+        System.out.print("Extended encryption test:");
+        if (testSuite.TestRSALibraryEncryption(testVectorASCII, publicKey, privateKey))
             TEST_FAIL();
         else
             TEST_OK();
 
-        System.out.print("Short signature test: ");
+        System.out.print("Short signature test:");
         if (!testSuite.TestRSALibrarySignature(testVectorBasic, publicKey, privateKey))
             TEST_FAIL();
         else
             TEST_OK();
 
-        System.out.print("Extended signature test: ");
+        System.out.print("Extended signature test:");
         if (!testSuite.TestRSALibrarySignature(testVectorASCII, publicKey, privateKey))
             TEST_FAIL();
         else

@@ -4,7 +4,7 @@
  * @Project: Data Protection Lab 2
  * @Filename: RSALibrary.java
  * @Last modified by:   Guillermo Escobero, Alvaro Santos
- * @Last modified time: 04-10-2020
+ * @Last modified time: 11-10-2020
  */
 
 
@@ -75,6 +75,9 @@ public class RSALibrary {
         }
     }
 
+    /***********************************************************************************/
+    /* Stores the key in the path provided */
+    /***********************************************************************************/
     public void keyToFile(Key key, String file) {
         if (key == null || file.length() <= 0)
           return;
@@ -92,6 +95,9 @@ public class RSALibrary {
         }
     }
 
+    /***********************************************************************************/
+    /* Retrieves an RSA key from the path provided */
+    /***********************************************************************************/
     public Key fileToKey(String file) {
         Key key = null;
 
@@ -129,11 +135,10 @@ public class RSALibrary {
 
             // Initialize the cipher object and use it to encrypt the plaintext
             cipher.init(Cipher.ENCRYPT_MODE, key);
-
             cipherText = cipher.doFinal(plainText);
 
         } catch (IllegalBlockSizeException i) {
-            System.out.println("Message is longer than the key");
+            System.out.print("Message is longer than the RSA key");
             return null;
         }
 
@@ -163,7 +168,6 @@ public class RSALibrary {
 
             // Initialize the cipher object and use it to decrypt the ciphertext
             cipher.init(Cipher.DECRYPT_MODE, key);
-
             plainText = cipher.doFinal(cipherText);
 
         } catch (Exception e) {
@@ -182,6 +186,9 @@ public class RSALibrary {
     public byte[] sign(byte[] plainText, PrivateKey key) {
 
         byte[] signedInfo = null;
+
+        if (plainText == null || key == null)
+          return null;
 
         try {
             // Gets a Signature object
