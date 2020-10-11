@@ -167,6 +167,8 @@ public class TestRSALibrary {
             (byte)49, (byte)50, (byte)51, (byte)52
     };
 
+    private static byte[] testVectorEmpty = null;
+
     private boolean TestRSALibraryEncryption(byte[] test, PublicKey publicK, PrivateKey privateK) throws Exception {
 
         RSALibrary rsa = new RSALibrary();
@@ -217,6 +219,12 @@ public class TestRSALibrary {
         else
             TEST_OK();
 
+        System.out.print("Null encryption test:");
+        if (testSuite.TestRSALibraryEncryption(testVectorEmpty, publicKey, privateKey))
+            TEST_FAIL();
+        else
+            TEST_OK();
+
         System.out.print("Short signature test:");
         if (!testSuite.TestRSALibrarySignature(testVectorBasic, publicKey, privateKey))
             TEST_FAIL();
@@ -225,6 +233,12 @@ public class TestRSALibrary {
 
         System.out.print("Extended signature test:");
         if (!testSuite.TestRSALibrarySignature(testVectorASCII, publicKey, privateKey))
+            TEST_FAIL();
+        else
+            TEST_OK();
+
+        System.out.print("Null signature test:");
+        if (testSuite.TestRSALibrarySignature(testVectorEmpty, publicKey, privateKey))
             TEST_FAIL();
         else
             TEST_OK();
