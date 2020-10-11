@@ -7,8 +7,6 @@
  * @Last modified time: 04-10-2020
  */
 
-
-
 package main.java.lab1;
 
 import java.io.FileDescriptor;
@@ -38,125 +36,147 @@ public class SymmetricCipher {
     public void SymmetricCipher() {
     }
 
-    private byte[] PKCS5Padding(byte[] plainText, int blockSize) {
-        // The padding value is the number remaining bytes to fill the block
-        int padding = blockSize - (plainText.length % blockSize);
-        if (padding == 0)
-            padding = blockSize;
+	private byte[] PKCS5Padding(byte[] plainText, int blockSize) {
 
-        byte[] paddedText = new byte[plainText.length + padding];
+		if(plainText == null) {
+			return null;
+		}
 
-        // Copy the plaintext
-        for (int i = 0; i < plainText.length; i++)
-            paddedText[i] = plainText[i];
+		int padding = blockSize - (plainText.length % blockSize);
+		if (padding == 0)
+			padding = blockSize;
 
-        // Add padding value
-        for (int i = plainText.length; i < paddedText.length; i++)
-            paddedText[i] = (byte)padding;
+		byte[] paddedText = new byte[plainText.length + padding];
 
-        return paddedText;
-    }
+		for (int i = 0; i < plainText.length; i++)
+			paddedText[i] = plainText[i];
 
-    private byte[] PKCS5Trimming(byte[] plainText) {
-        // The last byte indicates the number of bytes to trim from the
-        // plaintext in order to remove the padding
-        byte pad = plainText[plainText.length - 1];
-        byte[] noPadded = new byte[plainText.length - (int)pad];
+		for (int i = plainText.length; i < paddedText.length; i++)
+			paddedText[i] = (byte)padding;
 
-        // Copy all bytes but the last ones (padding)
-        for (int i = 0; i < noPadded.length; i++)
-            noPadded[i] = plainText[i];
+		return paddedText;
+	}
 
-        return noPadded;
-    }
+	private byte[] PKCS5Trimming(byte[] plainText) {
 
-    /*************************************************************************************/
-    /* Method to encrypt using AES/CBC/PKCS5 */
-    /*************************************************************************************/
-    public byte[] encryptCBC (byte[] input, byte[] byteKey) throws Exception {
+		if(plainText == null) {
+			//System.out.println("Empty plaintext");
+			return null;
+		}
 
-        if (input == null || byteKey == null)
-          return null;
+		byte pad = plainText[plainText.length - 1];
+		byte[] noPadded = new byte[plainText.length - (int)pad];
 
-        // Add padding to the input
-        input = PKCS5Padding(input, AES_BLOCK_SIZE);
+		for (int i = 0; i < noPadded.length; i++)
+			noPadded[i] = plainText[i];
 
-        // Output length will be equal to input length (already padded)
-        byte[] ciphertext = new byte[input.length];
+		return noPadded;
+	}
 
-        // Initialize encryption engine with AES key passed
-        s = new SymmetricEncryption(byteKey);
+	/*************************************************************************************/
+	/* Method to encrypt using AES/CBC/PKCS5 */
+	/*************************************************************************************/
+	public byte[] encryptCBC (byte[] input, byte[] byteKey) throws Exception {
 
-        // Initialize temporal variables with IV
-        byte[] prevBlock = new byte[AES_BLOCK_SIZE];
-        byte[] currBlock = new byte[AES_BLOCK_SIZE];
-        System.arraycopy(iv, 0, prevBlock, 0, AES_BLOCK_SIZE);
-        System.arraycopy(iv, 0, currBlock, 0, AES_BLOCK_SIZE);
+		byte[] ciphertext;
 
-        // CBC mode for each block
-        for (int i = 0; i < input.length/AES_BLOCK_SIZE; i++) {
-            // Get the current block from the input buffer
-            System.arraycopy(input, i*AES_BLOCK_SIZE, currBlock, 0, AES_BLOCK_SIZE);
+		try {
+			// Add padding to the input
+			input = PKCS5Padding(input, AES_BLOCK_SIZE);
 
-            // XOR operation
-            for (int j = 0; j < AES_BLOCK_SIZE; j++)
-                currBlock[j] ^= prevBlock[j];
+			// Output length will be equal to input length (already padded)
+			ciphertext = new byte[input.length];
 
-            // Encode the current block with AES
-            prevBlock = s.encryptBlock(currBlock);
+			// Initialize encryption engine with AES key passed
+			s = new SymmetricEncryption(byteKey);
 
-            // Copy the result to the final buffer
-            System.arraycopy(prevBlock, 0, ciphertext, i*AES_BLOCK_SIZE, AES_BLOCK_SIZE);
-        }
+			// Initialize temporal variables with IV
+			byte[] prevBlock = new byte[AES_BLOCK_SIZE];
+			byte[] currBlock = new byte[AES_BLOCK_SIZE];
+			System.arraycopy(iv, 0, prevBlock, 0, AES_BLOCK_SIZE);
+			System.arraycopy(iv, 0, currBlock, 0, AES_BLOCK_SIZE);
 
-        return ciphertext;
-    }
+			// CBC mode for each block
+			for (int i = 0; i < input.length/AES_BLOCK_SIZE; i++) {
+				// Get the current block from the input buffer
+				System.arraycopy(input, i*AES_BLOCK_SIZE, currBlock, 0, AES_BLOCK_SIZE);
 
-    /*************************************************************************************/
-    /* Method to decrypt using AES/CBC/PKCS5 */
-    /*************************************************************************************/
-    public byte[] decryptCBC (byte[] input, byte[] byteKey) throws Exception {
+				// XOR operation
+				for (int j = 0; j < AES_BLOCK_SIZE; j++)
+					currBlock[j] ^= prevBlock[j];
 
-        if (input == null || byteKey == null)
-          return null;
+				// Encode the current block with AES
+				prevBlock = s.encryptBlock(currBlock);
 
-        // Output length will be equal to input length (padding included!)
-        // Real output length will be reduced later, when padding is removed
-        byte[] plainText = new byte[input.length];
+				// Copy the result to the final buffer
+				System.arraycopy(prevBlock, 0, ciphertext, i*AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+			}
 
-        // Initialize decryption engine with AES key passed
-        d = new SymmetricEncryption(byteKey);
+		} catch (NullPointerException e){
+			//System.out.println("\nEmpty input text");
+			return null;
 
-        // Initialize temporal variables with IV
-        byte[] prevBlock = new byte[AES_BLOCK_SIZE];
-        byte[] currBlock = new byte[AES_BLOCK_SIZE];
-        byte[] deciphered = new byte[AES_BLOCK_SIZE];
-        System.arraycopy(iv, 0, prevBlock, 0, AES_BLOCK_SIZE);
-        System.arraycopy(iv, 0, currBlock, 0, AES_BLOCK_SIZE);
+		} catch (Exception e){
+			return null;
+		}
 
-        // CBC mode for each block
-        for (int i = 0; i < input.length/AES_BLOCK_SIZE; i++) {
-            // Get the current block from the input buffer
-            System.arraycopy(input, i*AES_BLOCK_SIZE, currBlock, 0, AES_BLOCK_SIZE);
+		return ciphertext;
+	}
 
-            // Decode the current block with AES
-            deciphered = s.decryptBlock(currBlock);
+	/*************************************************************************************/
+	/* Method to decrypt using AES/CBC/PKCS5 */
+	/*************************************************************************************/
 
-            // XOR operation
-            for (int j = 0; j < AES_BLOCK_SIZE; j++)
-                deciphered[j] ^= prevBlock[j];
 
-            // Update prevBlock for the next block operation
-            System.arraycopy(currBlock, 0, prevBlock, 0, AES_BLOCK_SIZE);
+	public byte[] decryptCBC (byte[] input, byte[] byteKey) throws Exception {
 
-            // Copy the result to the final buffer
-            System.arraycopy(deciphered, 0, plainText, i*AES_BLOCK_SIZE, AES_BLOCK_SIZE);
-        }
+		byte[] plainText;
 
-        // Remove padding from cleartext
-        plainText = PKCS5Trimming(plainText);
+		try {
+			// Output length will be equal to input length (padding included!)
+			// Real output length will be reduced later, when padding is removed
+			plainText = new byte[input.length];
+			// Initialize decryption engine with AES key passed
+			d = new SymmetricEncryption(byteKey);
 
-        return plainText;
-    }
+			// Initialize temporal variables with IV
+			byte[] prevBlock = new byte[AES_BLOCK_SIZE];
+			byte[] currBlock = new byte[AES_BLOCK_SIZE];
+			byte[] deciphered = new byte[AES_BLOCK_SIZE];
+			System.arraycopy(iv, 0, prevBlock, 0, AES_BLOCK_SIZE);
+			System.arraycopy(iv, 0, currBlock, 0, AES_BLOCK_SIZE);
+
+			// CBC mode for each block
+			for (int i = 0; i < input.length/AES_BLOCK_SIZE; i++) {
+				// Get the current block from the input buffer
+				System.arraycopy(input, i*AES_BLOCK_SIZE, currBlock, 0, AES_BLOCK_SIZE);
+
+				// Decode the current block with AES
+				deciphered = d.decryptBlock(currBlock);
+
+				// XOR operation
+				for (int j = 0; j < AES_BLOCK_SIZE; j++)
+					deciphered[j] ^= prevBlock[j];
+
+				// Update prevBlock for the next block operation
+				System.arraycopy(currBlock, 0, prevBlock, 0, AES_BLOCK_SIZE);
+
+				// Copy the result to the final buffer
+				System.arraycopy(deciphered, 0, plainText, i*AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+			}
+
+			// Remove padding from cleartext
+			plainText = PKCS5Trimming(plainText);
+
+		} catch (NullPointerException e){
+			//System.out.println("Empty ciphertext");
+			return null;
+
+		} catch (Exception e){
+			return null;
+		}
+
+		return plainText;
+	}
 
 }
