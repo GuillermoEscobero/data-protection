@@ -3,8 +3,7 @@
  * @Date:   04-10-2020
  * @Project: Data Protection Lab 2
  * @Filename: RSALibrary.java
- * @Last modified by:   Guillermo Escobero, Alvaro Santos
- * @Last modified time: 11-10-2020
+ * @Last modified time: 12-10-2020
  */
 
 
@@ -87,7 +86,7 @@ public class RSALibrary {
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
             oos.writeObject(key);
-            oos.flush();
+            //oos.flush();
             oos.close();
         } catch (Exception e) {
             e.printStackTrace();
@@ -170,7 +169,7 @@ public class RSALibrary {
             plainText = cipher.doFinal(cipherText);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("Error: decrypt failed");
             return null;
         }
 

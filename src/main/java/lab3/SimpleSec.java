@@ -3,8 +3,7 @@
  * @Date:   04-10-2020
  * @Project: Data Protection Lab
  * @Filename: SimpleSec.java
- * @Last modified by:   Guillermo Escobero, Alvaro Santos
- * @Last modified time: 11-10-2020
+ * @Last modified time: 12-10-2020
  */
 
 
@@ -18,17 +17,20 @@ import java.security.KeyPair;
 import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import javax.crypto.BadPaddingException;
 import java.util.Arrays;
 import java.io.Console;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.StreamCorruptedException;
+import java.nio.file.NoSuchFileException;
 
 import main.java.lab1.SymmetricCipher;
 import main.java.lab2.RSALibrary;
 
 public class SimpleSec {
-  final int DIGEST_LENGTH = 128;
+  final int DIGEST_LENGTH = 128; // Size of signature in bytes (1024-bits RSA key)
   private RSALibrary rsaLibrary;
   private SymmetricCipher cipher;
 
@@ -37,6 +39,7 @@ public class SimpleSec {
     cipher = new SymmetricCipher();
   }
 
+  /* Concatenates B array to A array */
   private static byte[] concat(byte[] a, byte[] b) {
     int lenA = a.length;
     int lenB = b.length;
@@ -51,11 +54,13 @@ public class SimpleSec {
       File inputFile = new File(inputPath);
       File outputFile = new File(outputPath);
 
-      PublicKey publicKey = (PublicKey)rsaLibrary.fileToKey("./public.key");
+      PublicKey publicKey = (PublicKey)rsaLibrary.fileToKey(RSALibrary.PUBLIC_KEY_FILE);
 
-      ByteArrayInputStream in = new ByteArrayInputStream(decryptFile("./private.key", passphrase.getBytes()));
+      ByteArrayInputStream in = new ByteArrayInputStream(decryptFile(RSALibrary.PRIVATE_KEY_FILE, passphrase.getBytes()));
       ObjectInputStream is = new ObjectInputStream(in);
       PrivateKey privateKey = (PrivateKey)is.readObject();
+      is.close();
+      in.close();
 
       // Verify signature
       byte[] fileContent = Files.readAllBytes(inputFile.toPath());
@@ -68,10 +73,10 @@ public class SimpleSec {
       System.arraycopy(fileContent, 0, fileNoSignature, 0, fileContent.length - DIGEST_LENGTH);
 
       // Verify signature
-      if(rsaLibrary.verify(fileNoSignature, signature, publicKey))
-        System.out.println("SIGNATURE OK");
-      else
-        System.out.println("SIGNATURE FAILS");
+      if(!rsaLibrary.verify(fileNoSignature, signature, publicKey)) {
+        System.err.println("Error: signature not correct");
+        System.exit(-1);
+      }
 
       // Trim session key from the file
       byte[] sessionKeyEncrypted = new byte[128];
@@ -84,8 +89,24 @@ public class SimpleSec {
 
       // Decrypt file
       fileNoSessionKey = cipher.decryptCBC(fileNoSessionKey, sessionKey);
+
       Files.write(outputFile.toPath(), fileNoSessionKey);
 
+    } catch(StreamCorruptedException e) {
+      System.err.println("Error: Key not found or bad formatted");
+      System.exit(-1);
+    } catch(NegativeArraySizeException e) {
+      System.err.println("Error: Input file bad formatted");
+      System.exit(-1);
+    } catch(NullPointerException e) {
+      System.err.println("Error: Key not found or bad formatted");
+      System.exit(-1);
+    } catch(BadPaddingException e) {
+      System.err.println("Error: Key not correct");
+      System.exit(-1);
+    } catch(NoSuchFileException e) {
+      System.err.println("Error: Key or input file not found");
+      System.exit(-1);
     } catch(Exception e) {
       e.printStackTrace();
       System.exit(-1);
@@ -99,9 +120,9 @@ public class SimpleSec {
         File inputFile = new File(inputPath);
         File outputFile = new File(outputPath);
 
-        PublicKey publicKey = (PublicKey)rsaLibrary.fileToKey("./public.key");
+        PublicKey publicKey = (PublicKey)rsaLibrary.fileToKey(RSALibrary.PUBLIC_KEY_FILE);
 
-        ByteArrayInputStream in = new ByteArrayInputStream(decryptFile("./private.key", passphrase.getBytes()));
+        ByteArrayInputStream in = new ByteArrayInputStream(decryptFile(RSALibrary.PRIVATE_KEY_FILE, passphrase.getBytes()));
         ObjectInputStream is = new ObjectInputStream(in);
         PrivateKey privateKey = (PrivateKey)is.readObject();
 
@@ -118,20 +139,23 @@ public class SimpleSec {
 
         // Sign file with RSA
         // Append signature to the ciphertext
-        if (cipherText == null) {
-          System.out.println("ciphertext null");
-        }
-        if (privateKey == null) {
-          System.out.println("privateKey null");
-        }
         cipherText = concat(cipherText, rsaLibrary.sign(cipherText, privateKey));
 
         Files.write(outputFile.toPath(), cipherText);
 
-    } catch (Exception e) {
+      } catch(StreamCorruptedException e) {
+        System.err.println("Error: Key not found or bad formatted");
+        System.exit(-1);
+      } catch(NoSuchFileException e) {
+        System.err.println("Error: Key or input file not found");
+        System.exit(-1);
+      } catch(NullPointerException e) {
+        System.err.println("Error: Key not found or bad formatted");
+        System.exit(-1);
+      } catch(Exception e) {
         e.printStackTrace();
         System.exit(-1);
-    }
+      }
   }
 
   private byte[] encryptFile(String path, byte[] sessionKey) {
@@ -146,7 +170,7 @@ public class SimpleSec {
       cipherText = cipher.encryptCBC(fileContent, sessionKey);
 
     } catch(Exception e) {
-      e.printStackTrace();
+      return null;
     }
 
     return cipherText;
@@ -164,7 +188,7 @@ public class SimpleSec {
       cipherText = cipher.decryptCBC(fileContent, sessionKey);
 
     } catch(Exception e) {
-      e.printStackTrace();
+      return null;
     }
 
     return cipherText;
@@ -180,7 +204,8 @@ public class SimpleSec {
 
       Files.write(inputFile.toPath(), cipher.encryptCBC(fileContent, sessionKey));
     } catch(Exception e) {
-      e.printStackTrace();
+      System.err.println("Error: failed when encrypting " + path);
+      System.exit(-1);
     }
   }
 
@@ -189,52 +214,30 @@ public class SimpleSec {
 
     try {
       rsaLibrary.generateKeys();
-      encryptPath("./private.key", passphrase.getBytes());
+      encryptPath(RSALibrary.PRIVATE_KEY_FILE, passphrase.getBytes());
 
     } catch(Exception e) {
-      e.printStackTrace();
+      System.err.println("Error: failed when generating keys");
+      System.exit(-1);
     }
-
-/*
-    try {
-      rsaLibrary.generateKeys();
-      cipher = new SymmetricCipher();
-      PrivateKey privateKey = (PrivateKey)rsaLibrary.fileToKey("./private.key");
-
-      encryptPath("./private.key", passphrase.getBytes());
-
-      ByteArrayInputStream in = new ByteArrayInputStream(decryptFile("./private.key", passphrase.getBytes()));
-      ObjectInputStream is = new ObjectInputStream(in);
-      PrivateKey priv2 = (PrivateKey)is.readObject();
-
-      if(privateKey.equals(priv2))
-          System.out.println("OK!!!");
-      else
-        System.out.println("NOT equal");
-
-    } catch(Exception e) {
-      e.printStackTrace();
-    }
-*/
   }
 
   private String askForPassphrase() {
     Console console = System.console();
     if (console == null) {
-      System.out.println("Couldn't get console instance");
+      System.err.println("Error: Couldn't get console instance");
       return null;
     }
 
     String s = new String(console.readPassword("Enter passphrase: "));
     if (s.length() != 16) {
-      System.out.println("Passphrase must be 16 bytes long (16 ASCII characters)");
+      System.err.println("Passphrase must be 16 bytes long (16 ASCII characters)");
       return null;
     }
 
     String s2 = new String(console.readPassword("Enter passphrase again: "));
-
     if (!s.equals(s2)) {
-      System.out.println("Passphrase does not match");
+      System.err.println("Passphrase does not match");
       return null;
     }
 
@@ -244,7 +247,7 @@ public class SimpleSec {
   public static void main(String[] args) {
     if (args.length < 1)
     {
-      System.out.println("No arguments");
+      System.err.println("Usage: simpleSec option [sourceFile destinationFile]");
       return;
     }
 
@@ -260,11 +263,15 @@ public class SimpleSec {
 
         System.out.println("Generating key files...");
         simpleSec.generateKeysWithPassphrase(s);
+        System.out.println("Keys generated on " + RSALibrary.PUBLIC_KEY_FILE + " and " + RSALibrary.PRIVATE_KEY_FILE);
 
         break;
       case "e":
         if (args.length < 3)
+        {
+          System.err.println("Usage: simpleSec e sourceFile destinationFile");
           return;
+        }
 
         // s = simpleSec.askForPassphrase();
         // if (s == null)
@@ -275,7 +282,10 @@ public class SimpleSec {
         break;
       case "d":
         if (args.length < 3)
+        {
+          System.err.println("Usage: simpleSec d sourceFile destinationFile");
           return;
+        }
 
         // s = simpleSec.askForPassphrase();
         // if (s == null)
