@@ -34,7 +34,7 @@ public class SimpleSec {
   private RSALibrary rsaLibrary;
   private SymmetricCipher cipher;
 
-  public void SimpleSec() {
+  public SimpleSec() {
     rsaLibrary = new RSALibrary();
     cipher = new SymmetricCipher();
   }
@@ -49,7 +49,7 @@ public class SimpleSec {
   }
 
   private void decryptFilePGP(String inputPath, String outputPath, String passphrase) {
-    rsaLibrary = new RSALibrary();
+
     try {
       File inputFile = new File(inputPath);
       File outputFile = new File(outputPath);
@@ -108,13 +108,13 @@ public class SimpleSec {
       System.err.println("Error: Key or input file not found");
       System.exit(-1);
     } catch(Exception e) {
-      e.printStackTrace();
+      System.err.println("Error: fatal error while decrypting file");
       System.exit(-1);
     }
   }
 
   private void encryptFilePGP(String inputPath, String outputPath, String passphrase) {
-    rsaLibrary = new RSALibrary();
+
     try {
         byte[] cipherText;
         File inputFile = new File(inputPath);
@@ -153,14 +153,12 @@ public class SimpleSec {
         System.err.println("Error: Key not found or bad formatted");
         System.exit(-1);
       } catch(Exception e) {
-        e.printStackTrace();
+        System.err.println("Error: fatal error while encrypting file");
         System.exit(-1);
       }
   }
 
   private byte[] encryptFile(String path, byte[] sessionKey) {
-    cipher = new SymmetricCipher();
-
     byte[] cipherText = null;
 
     try {
@@ -177,8 +175,6 @@ public class SimpleSec {
   }
 
   private byte[] decryptFile(String path, byte[] sessionKey) {
-    cipher = new SymmetricCipher();
-
     byte[] cipherText = null;
 
     try {
@@ -195,8 +191,6 @@ public class SimpleSec {
   }
 
   private void encryptPath(String path, byte[] sessionKey) {
-    cipher = new SymmetricCipher();
-
     try {
       File inputFile = new File(path);
 
@@ -210,8 +204,6 @@ public class SimpleSec {
   }
 
   private void generateKeysWithPassphrase(String passphrase) {
-    rsaLibrary = new RSALibrary();
-
     try {
       rsaLibrary.generateKeys();
       encryptPath(RSALibrary.PRIVATE_KEY_FILE, passphrase.getBytes());
@@ -245,8 +237,7 @@ public class SimpleSec {
   }
 
   public static void main(String[] args) {
-    if (args.length < 1)
-    {
+    if (args.length < 1) {
       System.err.println("Usage: simpleSec option [sourceFile destinationFile]");
       return;
     }
@@ -261,14 +252,13 @@ public class SimpleSec {
         if (s == null)
           return;
 
-        System.out.println("Generating key files...");
+        System.out.println("Generating RSA 1024-bit key files...");
         simpleSec.generateKeysWithPassphrase(s);
         System.out.println("Keys generated on " + RSALibrary.PUBLIC_KEY_FILE + " and " + RSALibrary.PRIVATE_KEY_FILE);
 
         break;
       case "e":
-        if (args.length < 3)
-        {
+        if (args.length < 3) {
           System.err.println("Usage: simpleSec e sourceFile destinationFile");
           return;
         }
@@ -281,8 +271,7 @@ public class SimpleSec {
         simpleSec.encryptFilePGP(args[1], args[2], s);
         break;
       case "d":
-        if (args.length < 3)
-        {
+        if (args.length < 3) {
           System.err.println("Usage: simpleSec d sourceFile destinationFile");
           return;
         }

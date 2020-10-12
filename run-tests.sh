@@ -7,6 +7,8 @@
 
 
 
+#!/bin/bash
+
 # Enter in classpath
 cd src/
 
@@ -25,9 +27,22 @@ echo -e "\nLab 1 tests..."
 java test/java/lab1/TestSymmetricCipher
 
 echo -e "\nLab 2 tests..."
-#java test/java/lab2/TestRSALibrary
+java test/java/lab2/TestRSALibrary
 
 echo -e "\nLab 3 tests..."
-java main/java/lab3/SimpleSec g
-java main/java/lab3/SimpleSec e readme.txt readme.txt.enc
-java main/java/lab3/SimpleSec d readme.txt.enc readme2.txt
+echo -e "\nGenerating SimpleSec.jar file..."
+jar cfe ../SimpleSec.jar main.java.lab3.SimpleSec main/java/lab1/*.class main/java/lab2/*.class main/java/lab3/*.class
+
+echo "encrypt this" > readme.txt
+java -jar ../SimpleSec.jar g
+java -jar ../SimpleSec.jar e readme.txt readme.txt.enc
+java -jar ../SimpleSec.jar d readme.txt.enc readme.out
+
+diff readme.txt readme.out
+
+if [ $? -eq 0 ];
+then
+    echo -e "SimpleSec basic test PASS"
+else
+    echo -e "SimpleSec basic test FAILED"
+fi
