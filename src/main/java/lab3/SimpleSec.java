@@ -3,7 +3,7 @@
  * @Date:   04-10-2020
  * @Project: Data Protection Lab
  * @Filename: SimpleSec.java
- * @Last modified time: 12-10-2020
+ * @Last modified time: 14-10-2020
  */
 
 
@@ -24,6 +24,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.StreamCorruptedException;
+import java.io.FileNotFoundException;
 import java.nio.file.NoSuchFileException;
 
 import main.java.lab1.SymmetricCipher;
@@ -107,6 +108,9 @@ public class SimpleSec {
     } catch(NoSuchFileException e) {
       System.err.println("Error: Key or input file not found");
       System.exit(-1);
+    } catch(FileNotFoundException e) {
+      System.err.println("Error: Key or input file not found");
+      System.exit(-1);
     } catch(Exception e) {
       System.err.println("Error: fatal error while decrypting file");
       System.exit(-1);
@@ -147,6 +151,9 @@ public class SimpleSec {
         System.err.println("Error: Key not found or bad formatted");
         System.exit(-1);
       } catch(NoSuchFileException e) {
+        System.err.println("Error: Key or input file not found");
+        System.exit(-1);
+      } catch(FileNotFoundException e) {
         System.err.println("Error: Key or input file not found");
         System.exit(-1);
       } catch(NullPointerException e) {

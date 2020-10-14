@@ -3,7 +3,7 @@
  * @Date:   04-10-2020
  * @Project: Data Protection Lab 2
  * @Filename: RSALibrary.java
- * @Last modified time: 12-10-2020
+ * @Last modified time: 14-10-2020
  */
 
 
@@ -108,8 +108,8 @@ public class RSALibrary {
             ois.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
+            System.err.println("Error while reading key from file " + file);
+            return null;
         }
 
         return key;
@@ -136,7 +136,7 @@ public class RSALibrary {
             cipherText = cipher.doFinal(plainText);
 
         } catch (IllegalBlockSizeException i) {
-            System.out.print("Message is longer than the RSA key");
+            System.err.print("Message is longer than the RSA key");
             return null;
         }
 

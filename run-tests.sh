@@ -46,3 +46,49 @@ then
 else
     echo -e "SimpleSec basic test FAILED"
 fi
+
+echo -e "--Decrypt plain file:"
+java -jar ../SimpleSec.jar g
+java -jar ../SimpleSec.jar d readme.txt readme.txt.enc
+
+echo -e "--Decrypt non-existing file:"
+java -jar ../SimpleSec.jar g
+java -jar ../SimpleSec.jar d doesnotexist.txt readme.txt.enc
+
+echo -e "--Encrypt non-existing file:"
+java -jar ../SimpleSec.jar g
+java -jar ../SimpleSec.jar e doesnotexist.txt readme.txt.enc
+
+echo -e "--No private key found:"
+java -jar ../SimpleSec.jar g
+rm private.key
+java -jar ../SimpleSec.jar d readme.txt.enc readme.txt
+java -jar ../SimpleSec.jar e readme.txt readme.txt.enc
+
+echo -e "--No public key found:"
+java -jar ../SimpleSec.jar g
+rm public.key
+java -jar ../SimpleSec.jar d readme.txt.enc readme.txt
+java -jar ../SimpleSec.jar e readme.txt readme.txt.enc
+
+echo -e "--Try to decrypt with wrong keys"
+java -jar ../SimpleSec.jar g
+java -jar ../SimpleSec.jar d readme.txt.enc readme.txt
+
+echo -e "--Corrupt private.key file"
+java -jar ../SimpleSec.jar g
+java -jar ../SimpleSec.jar e readme.txt readme.txt.enc
+rm private.key
+echo "not valid" > private.key
+java -jar ../SimpleSec.jar d readme.txt.enc readme.txt
+java -jar ../SimpleSec.jar e readme.txt readme.txt.enc
+
+echo -e "--Corrupt public.key file"
+java -jar ../SimpleSec.jar g
+java -jar ../SimpleSec.jar e readme.txt readme.txt.enc
+rm public.key
+echo "not valid" > public.key
+java -jar ../SimpleSec.jar d readme.txt.enc readme.txt
+java -jar ../SimpleSec.jar e readme.txt readme.txt.enc
+
+echo -e "Done."
