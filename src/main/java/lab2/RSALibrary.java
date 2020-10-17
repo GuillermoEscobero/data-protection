@@ -3,7 +3,7 @@
  * @Date:   04-10-2020
  * @Project: Data Protection Lab 2
  * @Filename: RSALibrary.java
- * @Last modified time: 17-10-2020
+ * @Last modified time: 18-10-2020
  */
 
 package main.java.lab2;
@@ -56,7 +56,6 @@ public class RSALibrary {
             ios.close();
 
         } catch (Exception e) {
-            e.printStackTrace();
             System.exit(-1);
         }
     }
@@ -281,4 +280,3 @@ public class RSALibrary {
     }
 
 }
-

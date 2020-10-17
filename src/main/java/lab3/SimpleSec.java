@@ -3,7 +3,7 @@
  * @Date:   04-10-2020
  * @Project: Data Protection Lab
  * @Filename: SimpleSec.java
- * @Last modified time: 17-10-2020
+ * @Last modified time: 18-10-2020
  */
 
 package main.java.lab3;
@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.nio.file.NoSuchFileException;
 import java.security.InvalidKeyException;
+import java.security.spec.InvalidKeySpecException;
 
 import main.java.lab1.SymmetricCipher;
 import main.java.lab2.RSALibrary;
@@ -114,6 +115,9 @@ public class SimpleSec {
         } catch(InvalidKeyException e) {
             System.err.println("Error: invalid key format, corrupted");
             System.exit(-1);
+        } catch(InvalidKeySpecException e) {
+            System.err.println("Error: invalid key format, corrupted");
+            System.exit(-1);
         } catch(Exception e) {
             System.err.println("Error: fatal error while decrypting file");
             System.exit(-1);
@@ -165,6 +169,9 @@ public class SimpleSec {
         } catch(NullPointerException e) {
             System.err.println("Error: Key not found or bad formatted");
             System.exit(-1);
+        } catch(InvalidKeySpecException e) {
+            System.err.println("Error: invalid key format, corrupted");
+            System.exit(-1);
         } catch(Exception e) {
             System.err.println("Error: fatal error while encrypting file");
             System.exit(-1);
@@ -211,7 +218,6 @@ public class SimpleSec {
             rsaLibrary.generateKeys(passphrase);
 
         } catch(Exception e) {
-            e.printStackTrace();
             System.err.println("Error: failed when generating keys");
             System.exit(-1);
         }
