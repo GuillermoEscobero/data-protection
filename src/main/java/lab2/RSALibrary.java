@@ -3,8 +3,10 @@
  * @Date:   04-10-2020
  * @Project: Data Protection Lab 2
  * @Filename: RSALibrary.java
- * @Last modified time: 14-10-2020
+ * @Last modified time: 17-10-2020
  */
+
+package main.java.lab2;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -22,6 +24,7 @@ import java.security.Signature;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 
+import main.java.lab1.SymmetricCipher;
 
 public class RSALibrary {
 
@@ -36,14 +39,34 @@ public class RSALibrary {
 
     // String to hold name of the public key file.
     public static final String PUBLIC_KEY_FILE = "./public.key";
-    
+
+    public void writePriv(Key key, String file, String pass) {
+        if (key == null || file.length() <= 0)
+            return;
+
+        SymmetricCipher cipher = new SymmetricCipher();
+
+        try {
+            //Get the Key in bytes
+            byte[] byteKey = key.getEncoded();
+
+            //Write the bytes of the private key directly encoded on the file
+            FileOutputStream ios = new FileOutputStream(file);
+            ios.write(cipher.encryptCBC(byteKey, pass.getBytes()));
+            ios.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+    }
+
     /***********************************************************************************/
     /* Generates an RSA key pair (a public and a private key) of 1024 bits length */
     /* Stores the keys in the files defined by PUBLIC_KEY_FILE and PRIVATE_KEY_FILE */
     /* Throws IOException */
     /***********************************************************************************/
-    public void generateKeys(String passphrase) throws IOException {
-    	SimpleSec simpleSec = new SimpleSec();
+    public void generateKeys() throws IOException {
         try {
             final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
             keyGen.initialize(1024, new SecureRandom());
@@ -57,8 +80,29 @@ public class RSALibrary {
             keyToFile(publicKey, PUBLIC_KEY_FILE);
 
             // Store the private key in the file PRIVATE_KEY_FILE
-            //keyToFile(privateKey, PRIVATE_KEY_FILE);
-            simpleSec.writePriv(privateKey,PRIVATE_KEY_FILE, passphrase);
+            keyToFile(privateKey, PRIVATE_KEY_FILE);
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+    }
+
+    public void generateKeys(String passphrase) throws IOException {
+        try {
+            final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
+            keyGen.initialize(1024, new SecureRandom());
+
+            // Use KeyGen to generate a public and a private key
+            KeyPair pair = keyGen.generateKeyPair();
+            PublicKey publicKey = pair.getPublic();
+            PrivateKey privateKey = pair.getPrivate();
+
+            // Store the public key in the file PUBLIC_KEY_FILE
+            keyToFile(publicKey, PUBLIC_KEY_FILE);
+
+            // Store the ENCRYPTED private key in the file PRIVATE_KEY_FILE
+            writePriv(privateKey,PRIVATE_KEY_FILE, passphrase);
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -71,7 +115,7 @@ public class RSALibrary {
     /***********************************************************************************/
     public void keyToFile(Key key, String file) {
         if (key == null || file.length() <= 0)
-          return;
+            return;
 
         try {
             FileOutputStream fos = new FileOutputStream(file);
@@ -139,7 +183,7 @@ public class RSALibrary {
 
         return cipherText;
     }
-    
+
 
     /***********************************************************************************/
     /* Decrypts a ciphertext using an RSA private key. */
@@ -179,7 +223,7 @@ public class RSALibrary {
         byte[] signedInfo = null;
 
         if (plainText == null || key == null)
-          return null;
+            return null;
 
         try {
             // Gets a Signature object
@@ -211,7 +255,7 @@ public class RSALibrary {
     public boolean verify(byte[] plainText, byte[] signed, PublicKey key) {
 
         if (plainText == null || signed == null || key == null)
-          return false;
+            return false;
 
         boolean result = false;
 
@@ -237,3 +281,4 @@ public class RSALibrary {
     }
 
 }
+
