@@ -6,13 +6,7 @@
  * @Last modified time: 14-10-2020
  */
 
-
-
-package main.java.lab2;
-
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -24,12 +18,9 @@ import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.Signature;
 import javax.crypto.Cipher;
-
 import javax.crypto.IllegalBlockSizeException;
-import java.util.Arrays;
 
 
 public class RSALibrary {
@@ -45,14 +36,14 @@ public class RSALibrary {
 
     // String to hold name of the public key file.
     public static final String PUBLIC_KEY_FILE = "./public.key";
-
+    
     /***********************************************************************************/
     /* Generates an RSA key pair (a public and a private key) of 1024 bits length */
     /* Stores the keys in the files defined by PUBLIC_KEY_FILE and PRIVATE_KEY_FILE */
     /* Throws IOException */
     /***********************************************************************************/
-    public void generateKeys() throws IOException {
-
+    public void generateKeys(String passphrase) throws IOException {
+    	SimpleSec simpleSec = new SimpleSec();
         try {
             final KeyPairGenerator keyGen = KeyPairGenerator.getInstance(ALGORITHM);
             keyGen.initialize(1024, new SecureRandom());
@@ -66,7 +57,8 @@ public class RSALibrary {
             keyToFile(publicKey, PUBLIC_KEY_FILE);
 
             // Store the private key in the file PRIVATE_KEY_FILE
-            keyToFile(privateKey, PRIVATE_KEY_FILE);
+            //keyToFile(privateKey, PRIVATE_KEY_FILE);
+            simpleSec.writePriv(privateKey,PRIVATE_KEY_FILE, passphrase);
 
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -147,6 +139,7 @@ public class RSALibrary {
 
         return cipherText;
     }
+    
 
     /***********************************************************************************/
     /* Decrypts a ciphertext using an RSA private key. */
