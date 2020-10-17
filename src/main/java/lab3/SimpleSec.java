@@ -8,27 +8,23 @@
 
 
 
-package main.java.lab3;
-
 import java.io.File;
+import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.security.SecureRandom;
-import java.security.KeyPair;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.Key;
+import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import javax.crypto.BadPaddingException;
 import java.util.Arrays;
 import java.io.Console;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.StreamCorruptedException;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.nio.file.NoSuchFileException;
 
-import main.java.lab1.SymmetricCipher;
-import main.java.lab2.RSALibrary;
 
 public class SimpleSec {
   final int DIGEST_LENGTH = 128; // Size of signature in bytes (1024-bits RSA key)
@@ -56,12 +52,13 @@ public class SimpleSec {
       File outputFile = new File(outputPath);
 
       PublicKey publicKey = (PublicKey)rsaLibrary.fileToKey(RSALibrary.PUBLIC_KEY_FILE);
-
-      ByteArrayInputStream in = new ByteArrayInputStream(decryptFile(RSALibrary.PRIVATE_KEY_FILE, passphrase.getBytes()));
-      ObjectInputStream is = new ObjectInputStream(in);
-      PrivateKey privateKey = (PrivateKey)is.readObject();
-      is.close();
-      in.close();
+      
+      //Read plain bytes of the private key
+      byte[] bytesPriv = readPriv(RSALibrary.PRIVATE_KEY_FILE, passphrase);
+      
+      //Create an object PrivateKey with these bytes
+      KeyFactory kf = KeyFactory.getInstance("RSA");
+      PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(bytesPriv));
 
       // Verify signature
       byte[] fileContent = Files.readAllBytes(inputFile.toPath());
@@ -121,15 +118,18 @@ public class SimpleSec {
 
     try {
         byte[] cipherText;
-        File inputFile = new File(inputPath);
+
         File outputFile = new File(outputPath);
 
         PublicKey publicKey = (PublicKey)rsaLibrary.fileToKey(RSALibrary.PUBLIC_KEY_FILE);
-
-        ByteArrayInputStream in = new ByteArrayInputStream(decryptFile(RSALibrary.PRIVATE_KEY_FILE, passphrase.getBytes()));
-        ObjectInputStream is = new ObjectInputStream(in);
-        PrivateKey privateKey = (PrivateKey)is.readObject();
-
+        
+        //Read plain bytes of the private key
+        byte[] bytesPriv = readPriv(RSALibrary.PRIVATE_KEY_FILE, passphrase);
+        
+        //Create an object PrivateKey with these bytes
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(bytesPriv));
+        
         // Create session key for AES
         byte[] sessionKey = new byte[16];
         SecureRandom.getInstanceStrong().nextBytes(sessionKey);
@@ -181,41 +181,80 @@ public class SimpleSec {
     return cipherText;
   }
 
-  private byte[] decryptFile(String path, byte[] sessionKey) {
-    byte[] cipherText = null;
+//  private byte[] decryptFile(String path, byte[] sessionKey) {
+//    byte[] cipherText = null;
+//
+//    try {
+//      File inputFile = new File(path);
+//
+//      byte[] fileContent = Files.readAllBytes(inputFile.toPath());
+//      cipherText = cipher.decryptCBC(fileContent, sessionKey);
+//
+//    } catch(Exception e) {
+//      return null;
+//    }
+//
+//    return cipherText;
+//  }
+//
+//  private void encryptPath(String path, byte[] sessionKey) {
+//    try {
+//      File inputFile = new File(path);
+//
+//      byte[] fileContent = Files.readAllBytes(inputFile.toPath());
+//
+//      Files.write(inputFile.toPath(), cipher.encryptCBC(fileContent, sessionKey));
+//    } catch(Exception e) {
+//      System.err.println("Error: failed when encrypting " + path);
+//      System.exit(-1);
+//    }
+//  }
+  
+  public void writePriv(Key key, String file, String pass) {
+      if (key == null || file.length() <= 0)
+        return;
 
-    try {
-      File inputFile = new File(path);
-
-      byte[] fileContent = Files.readAllBytes(inputFile.toPath());
-      cipherText = cipher.decryptCBC(fileContent, sessionKey);
-
-    } catch(Exception e) {
-      return null;
-    }
-
-    return cipherText;
+      try {
+    	 //Get the Key in bytes
+         byte[] byteKey = key.getEncoded();
+         
+         //Write the bytes of the private key directly encoded on the file
+         FileOutputStream ios = new FileOutputStream(file);
+         ios.write(cipher.encryptCBC(byteKey, pass.getBytes()));
+         ios.close();
+         
+      } catch (Exception e) {
+          e.printStackTrace();
+          System.exit(-1);
+      }
   }
-
-  private void encryptPath(String path, byte[] sessionKey) {
-    try {
-      File inputFile = new File(path);
-
-      byte[] fileContent = Files.readAllBytes(inputFile.toPath());
-
-      Files.write(inputFile.toPath(), cipher.encryptCBC(fileContent, sessionKey));
-    } catch(Exception e) {
-      System.err.println("Error: failed when encrypting " + path);
-      System.exit(-1);
-    }
+  
+  public byte[] readPriv(String file, String pass) {
+	  byte[] decPriv;
+	  try {
+		  //Read encripted bytes of the private key
+		  FileInputStream ios = new FileInputStream(file);
+		  byte[] bytesPriv = ios.readAllBytes();
+		  ios.close();
+		  
+		  //Decipher the bytes using the passphrase
+		  decPriv = cipher.decryptCBC(bytesPriv, pass.getBytes()); 
+		  
+	      } catch (Exception e) {
+	          e.printStackTrace();
+	          return null;
+	          //System.exit(-1);
+	      }
+	  return decPriv;
   }
 
   private void generateKeysWithPassphrase(String passphrase) {
     try {
-      rsaLibrary.generateKeys();
-      encryptPath(RSALibrary.PRIVATE_KEY_FILE, passphrase.getBytes());
+      rsaLibrary.generateKeys(passphrase);
+      //encryptPath(RSALibrary.PRIVATE_KEY_FILE, passphrase.getBytes());
 
     } catch(Exception e) {
+    	e.printStackTrace();
       System.err.println("Error: failed when generating keys");
       System.exit(-1);
     }
@@ -276,6 +315,7 @@ public class SimpleSec {
         s = "1234567890123456";
 
         simpleSec.encryptFilePGP(args[1], args[2], s);
+        System.out.println("Encripted");
         break;
       case "d":
         if (args.length < 3) {
@@ -287,8 +327,8 @@ public class SimpleSec {
         // if (s == null)
         //   return;
         s = "1234567890123456";
-
         simpleSec.decryptFilePGP(args[1], args[2], s);
+        System.out.println("Decripted");
         break;
     }
   }
